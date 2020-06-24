@@ -272,6 +272,7 @@ public class HostReactor implements Closeable {
                 // hold a moment waiting for update finish
                 synchronized (serviceObj) {
                     try {
+                        // updatingMap是否存在这个key，如果存在，wait 5秒
                         serviceObj.wait(UPDATE_HOLD_INTERVAL);
                     } catch (InterruptedException e) {
                         NAMING_LOGGER.error("[getServiceInfo] serviceName:" + serviceName + ", clusters:" + clusters, e);
@@ -282,6 +283,7 @@ public class HostReactor implements Closeable {
 
         scheduleUpdateIfAbsent(serviceName, clusters);
 
+        // 返回服务信息
         return serviceInfoMap.get(serviceObj.getKey());
     }
 
@@ -296,6 +298,7 @@ public class HostReactor implements Closeable {
                 return;
             }
 
+            // 创建一个UpdateTask 每1秒进行服务更新操作
             ScheduledFuture<?> future = addTask(new UpdateTask(serviceName, clusters));
             futureMap.put(ServiceInfo.getKey(serviceName, clusters), future);
         }
@@ -305,9 +308,11 @@ public class HostReactor implements Closeable {
         ServiceInfo oldService = getServiceInfo0(serviceName, clusters);
         try {
 
+            // Get  /nacos/v1/ns/instance/list  获取服务实例
             String result = serverProxy.queryList(serviceName, clusters, pushReceiver.getUDPPort(), false);
 
             if (StringUtils.isNotEmpty(result)) {
+                // 处理返回结果
                 processServiceJSON(result);
             }
         } catch (Exception e) {

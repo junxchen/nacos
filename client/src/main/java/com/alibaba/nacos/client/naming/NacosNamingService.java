@@ -44,7 +44,7 @@ import java.util.List;
 import java.util.Properties;
 
 /**
- * Nacos Naming Service
+ * Nacos Naming Service|
  *
  * @author nkorange
  */
@@ -93,7 +93,9 @@ public class NacosNamingService implements NamingService {
 
         this.eventDispatcher = new EventDispatcher();
         this.serverProxy = new NamingProxy(this.namespace, this.endpoint, this.serverList, properties);
+        // 服务注册健康心跳检查反应器，默认5秒健康心跳检查
         this.beatReactor = new BeatReactor(this.serverProxy, initClientBeatThreadCount(properties));
+        // 服务发现反应器，默认1秒进行检查
         this.hostReactor = new HostReactor(this.eventDispatcher, this.serverProxy, beatReactor, this.cacheDir,
             isLoadCacheAtStart(properties), initPollingThreadCount(properties));
     }
@@ -332,6 +334,7 @@ public class NacosNamingService implements NamingService {
         } else {
             serviceInfo = hostReactor.getServiceInfoDirectlyFromServer(NamingUtils.getGroupedName(serviceName, groupName), StringUtils.join(clusters, ","));
         }
+        // 根据ServiceInfo创建Instance
         return selectInstances(serviceInfo, healthy);
     }
 
